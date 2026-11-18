@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Rob Run Hub</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #0c0508;
+    --card: #1a0a10;
+    --card2: #241016;
+    --line: #3d1522;
+    --red: #e11d48;
+    --crimson: #be123c;
+    --rose: #fb7185;
+    --text: #fff1f2;
+    --hint: #f9a8b4;
+    --good: #4ade80;
+    --warn: #fbbf24;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top, #2a0a14 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    padding: env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom));
+    line-height: 1.45;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 20;
+    background: linear-gradient(120deg, #7f1d1d, #e11d48 55%, #9f1239);
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(225,29,72,.4);
+  }
+  .brand { font-weight: 900; font-size: 16px; letter-spacing: .5px; text-transform: uppercase; }
+  .brand small { display: block; font-size: 11px; font-weight: 600; opacity: .85; text-transform: none; letter-spacing: 0; }
+  .wrap { padding: 16px 14px 24px; max-width: 520px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; animation: fade .22s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  h2 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+  .sub { color: var(--hint); font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+  .card {
+    background: linear-gradient(165deg, var(--card2), var(--card));
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  }
+  .card h3 {
+    font-size: 13px; font-weight: 800; color: var(--rose);
+    text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px;
+  }
+  label { display: block; font-size: 12px; color: var(--hint); margin: 10px 0 5px; font-weight: 600; }
+  input, select, textarea {
+    width: 100%; padding: 11px 12px; font-size: 15px; color: var(--text);
+    background: #0f0508; border: 1px solid var(--line); border-radius: 12px; outline: none;
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  input:focus, select:focus, textarea:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(225,29,72,.22); }
+  .btn {
+    width: 100%; margin-top: 12px; padding: 13px; border: none; border-radius: 13px;
+    background: linear-gradient(135deg, #e11d48, #9f1239); color: #fff;
+    font-weight: 800; font-size: 15px; cursor: pointer;
+    box-shadow: 0 5px 16px rgba(225,29,72,.35);
+  }
+  .btn:active { transform: scale(.98); }
+  .btn.ghost { background: transparent; border: 1px solid var(--red); box-shadow: none; }
+  .btn.sm { padding: 9px 12px; font-size: 13px; width: auto; margin-top: 8px; display: inline-block; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat {
+    background: #0f0508; border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px; text-align: center;
+  }
+  .stat .v { font-size: 20px; font-weight: 900; }
+  .stat .l { font-size: 10px; color: var(--hint); text-transform: uppercase; margin-top: 2px; }
+  .verdict {
+    margin-top: 10px; padding: 11px 13px; border-radius: 12px;
+    background: rgba(225,29,72,.12); border-left: 4px solid var(--red); line-height: 1.45; font-size: 14px;
+  }
+  .good { color: var(--good) !important; }
+  .warn { color: var(--warn) !important; }
+  .bad { color: var(--rose) !important; }
+  .note { font-size: 12px; color: var(--warn); margin-top: 6px; }
+
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile {
+    background: linear-gradient(160deg, var(--card2), var(--card));
+    border: 1px solid var(--line); border-radius: 16px; padding: 16px 12px;
+    color: var(--text); font-weight: 800; font-size: 14px; text-align: left; cursor: pointer;
+    transition: transform .12s, border-color .15s;
+  }
+  .tile:active { transform: scale(.97); }
+  .tile:hover { border-color: var(--red); }
+  .tile .n { font-size: 26px; display: block; margin-bottom: 6px; }
+  .tile .d { display: block; font-size: 11px; font-weight: 500; color: var(--hint); margin-top: 2px; }
+  .tile.wide { grid-column: 1 / -1; }
+
+  .spot {
+    background: #0f0508; border: 1px solid var(--line); border-radius: 14px;
+    overflow: hidden; margin-bottom: 12px;
+  }
+  .photo {
+    height: 120px; background: linear-gradient(135deg, #3b0a16, #12050a);
+    display: flex; align-items: center; justify-content: center; color: var(--hint); font-size: 12px;
+    position: relative;
+  }
+  .photo img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+  .photo span { position: relative; text-align: center; padding: 0 10px; }
+  .spot .body { padding: 12px; }
+  .spot h4 { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+  .meta { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 7px; }
+  .chip {
+    font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+    background: var(--card2); border: 1px solid var(--line); color: var(--hint);
+  }
+  .chip.r { color: #fff; background: var(--crimson); border-color: var(--crimson); }
+  .upload {
+    display: inline-block; margin-top: 6px; padding: 7px 11px; border-radius: 9px;
+    background: var(--card2); border: 1px dashed var(--rose); color: var(--rose);
+    font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .upload input { display: none; }
+
+  details {
+    background: #0f0508; border: 1px solid var(--line); border-radius: 13px;
+    padding: 11px 13px; margin-bottom: 9px;
+  }
+  details summary { cursor: pointer; font-weight: 800; list-style: none; font-size: 14px; }
+  details summary::-webkit-details-marker { display: none; }
+  details[open] summary { color: var(--rose); margin-bottom: 7px; }
+  details ul, details ol { margin: 0; padding-left: 17px; color: #ffe4e6; line-height: 1.65; font-size: 13.5px; }
+
+  .list-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 9px 2px; border-bottom: 1px dashed var(--line);
+  }
+  .list-row:last-child { border-bottom: none; }
+  .list-row .s { font-size: 11px; color: var(--hint); margin-top: 1px; }
+
+  .check {
+    display: flex; gap: 10px; align-items: center; padding: 10px 2px;
+    border-bottom: 1px dashed var(--line); cursor: pointer;
+  }
+  .check:last-child { border-bottom: none; }
+  .check input { width: 18px; height: 18px; accent-color: var(--red); flex: none; }
+  .check.done span { text-decoration: line-through; color: var(--hint); }
+  .bar { height: 7px; background: var(--line); border-radius: 6px; overflow: hidden; margin-top: 10px; }
+  .bar div { height: 100%; width: 0; background: linear-gradient(90deg, #fb7185, #e11d48); transition: width .3s; }
+  .timer {
+    font-size: 32px; font-weight: 900; text-align: center; margin: 12px 0 2px;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(90deg, #fb7185, #e11d48);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  .nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+    background: rgba(12,5,8,.95); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-around;
+    padding: 8px 2px calc(8px + env(safe-area-inset-bottom));
+  }
+  .nav button {
+    background: none; border: none; color: var(--hint); font-size: 10px;
+    font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 4px 4px; cursor: pointer; min-width: 52px;
+  }
+  .nav button.active { color: var(--rose); }
+  .nav button span { font-size: 18px; line-height: 1; }
+
+  .step { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-start; }
+  .step .num {
+    flex: none; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--crimson); color: #fff; font-weight: 900; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step .txt { flex: 1; font-size: 13.5px; }
+  .hidden { display: none !important; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 2px; }
+  .tab {
+    flex: none; padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    background: var(--card2); border: 1px solid var(--line); color: var(--hint); cursor: pointer;
+  }
+  .tab.active { background: var(--crimson); border-color: var(--crimson); color: #fff; }
+
+  .tip-box {
+    background: linear-gradient(135deg, rgba(251,191,36,.12), rgba(225,29,72,.1));
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 14px;
+  }
+  .tip-box .label { font-size: 11px; font-weight: 800; color: var(--warn); text-transform: uppercase; margin-bottom: 6px; }
+  .link-btn {
+    display: block; padding: 12px 14px; margin-bottom: 8px; border-radius: 12px;
+    background: #0f0508; border: 1px solid var(--line); color: var(--text);
+    text-decoration: none; font-weight: 700; font-size: 14px;
+  }
+  .link-btn small { display: block; font-weight: 500; font-size: 11px; color: var(--hint); margin-top: 2px; }
+  .cargo-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px;
+  }
+  .cargo-item:last-child { border-bottom: none; }
+  .cargo-item b { color: var(--good); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">Rob Run Hub<small>инструменты игрока · EA</small></div>
+</header>
+
+<main class="wrap">
+
+  <!-- HOME -->
+  <section id="v-home" class="view active">
+    <h2>Rob Run Hub</h2>
+    <p class="sub">Калькуляторы, бизнесы, продажа, места, заметки и таймер. Все цифры — community-оценки. Проверяйте в игре.</p>
+
+    <div class="tip-box" id="daily-tip">
+      <div class="label">Совет дня</div>
+      <div id="tip-text">Загрузка...</div>
+    </div>
+
+    <div class="tiles">
+      <button class="tile" data-go="biz"><span class="n">🏭</span>Бизнесы<span class="d">кусты · лаба</span></button>
+      <button class="tile" data-go="cargo"><span class="n">📦</span>Карго<span class="d">цены грузов</span></button>
+      <button class="tile" data-go="raid"><span class="n">🎯</span>Рейд<span class="d">шанс + доход</span></button>
+      <button class="tile" data-go="sell"><span class="n">💵</span>Продажа<span class="d">fence · smuggler</span></button>
+      <button class="tile" data-go="loot"><span class="n">💰</span>Лут<span class="d">места + фото</span></button>
+      <button class="tile" data-go="keys"><span class="n">🗝️</span>Ключи<span class="d">где искать</span></button>
+      <button class="tile" data-go="hide"><span class="n">🏠</span>Укрытие<span class="d">защита</span></button>
+      <button class="tile" data-go="notes"><span class="n">📝</span>Заметки<span class="d">личные</span></button>
+      <button class="tile" data-go="wipe"><span class="n">⏳</span>Вайп<span class="d">таймер</span></button>
+      <button class="tile" data-go="links"><span class="n">🔗</span>Ссылки<span class="d">wiki · steam</span></button>
+      <button class="tile wide" data-go="guide"><span class="n">📘</span>Гайды по ролям<span class="d">вор, коп, клан, новичок</span></button>
+    </div>
+  </section>
+
+  <!-- БИЗНЕСЫ -->
+  <section id="v-biz" class="view">
+    <h2>Бизнесы на базе</h2>
+    <p class="sub">После аренды участка. Цены — community. Уточняйте в игре.</p>
+    <div class="tabs">
+      <button class="tab active" data-tab="grow">🌱 Кусты</button>
+      <button class="tab" data-tab="lab">🧪 Лаба</button>
+      <button class="tab" data-tab="calc">📊 Доход</button>
+    </div>
+
+    <div id="tab-grow">
+      <div class="card">
+        <h3>Grow Room — кусты</h3>
+        <p style="font-size:13.5px;margin-bottom:10px">Стабильный пассив. Куст после сбора отрастает. Продукция → Fence.</p>
+        <div class="step"><div class="num">1</div><div class="txt">Арендуйте участок + дом.</div></div>
+        <div class="step"><div class="num">2</div><div class="txt">Trade Laptop → Larry's Tree → Grow Room.</div></div>
+        <div class="step"><div class="num">3</div><div class="txt">Купите Grow Table (до 6 столов × 6 кустов).</div></div>
+        <div class="step"><div class="num">4</div><div class="txt">Найдите Growing Bush в городе и поставьте на стол.</div></div>
+        <div class="step"><div class="num">5</div><div class="txt">Соберите Harvest Bags (2–4) и продайте Fence.</div></div>
+        <p class="note">Куст растёт снова. Не нужно искать новый каждый раз.</p>
+      </div>
+      <div class="card">
+        <h3>Затраты (Tier I, community)</h3>
+        <ul style="padding-left:18px;font-size:13.5px;line-height:1.7">
+          <li>Grow Room ≈ 150k research + 100k</li>
+          <li>Grow Table ≈ 30k + 40k</li>
+          <li>Один стол ≈ 320k</li>
+          <li>Ускорители: Fan +12%, Pump +14%, UV +24%</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Где искать кусты</h3>
+        <ul style="padding-left:18px;font-size:13.5px;line-height:1.7">
+          <li>Gear Store, Gun Shop (юг)</li>
+          <li>Около Rusty's Burgers</li>
+          <li>Ювелирка, аптека, отели</li>
+        </ul>
+        <p class="note">Спавн не фиксированный.</p>
+      </div>
+      <div class="card">
+        <h3>Цены мешков (Fence, N1)</h3>
+        <div class="stats">
+          <div class="stat"><div class="v">$4k</div><div class="l">Uncommon</div></div>
+          <div class="stat"><div class="v">$6k</div><div class="l">Epic</div></div>
+          <div class="stat"><div class="v">$8k</div><div class="l">Legendary</div></div>
+          <div class="stat"><div class="v">+50%</div><div class="l">макс N</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-lab" class="hidden">
+      <div class="card">
+        <h3>Chemical Lab</h3>
+        <p style="font-size:13.5px;margin-bottom:10px">Реагенты → концентрат → Hard Crystals → порошок. Кристаллы → Smuggler. Дым выдаёт базу.</p>
+        <div class="step"><div class="num">1</div><div class="txt">Участок + дом</div></div>
+        <div class="step"><div class="num">2</div><div class="txt">Chemical Laboratory</div></div>
+        <div class="step"><div class="num">3</div><div class="txt">Reactor → Freezer → Lab Table</div></div>
+        <div class="step"><div class="num">4</div><div class="txt">Reagent Canisters в реактор. Не прерывайте.</div></div>
+        <div class="step"><div class="num">5</div><div class="txt">Hard Crystals → Smuggler</div></div>
+      </div>
+      <div class="card">
+        <h3>Цены кристаллов (community)</h3>
+        <ul style="padding-left:18px;font-size:13.5px;line-height:1.7">
+          <li>Legendary Hard Crystals ≈ $75k</li>
+          <li>Epic ≈ $45k · Uncommon ≈ $30k</li>
+        </ul>
+        <p class="note">Сетап ~350–390k. Реагенты тратятся.</p>
+      </div>
+    </div>
+
+    <div id="tab-calc" class="hidden">
+      <div class="card">
+        <h3>Доход фермы (оценка)</h3>
+        <label>Зрелых кустов</label>
+        <input id="biz-bushes" type="number" min="1" max="36" value="6">
+        <label>Редкость</label>
+        <select id="biz-rarity">
+          <option value="4000">Uncommon ($4k)</option>
+          <option value="6000" selected>Epic ($6k)</option>
+          <option value="8000">Legendary ($8k)</option>
+        </select>
+        <label>Мешков с куста</label>
+        <input id="biz-bags" type="number" min="1" max="4" value="3">
+        <button class="btn" id="biz-calc">Посчитать</button>
+        <div id="biz-out" class="hidden">
+          <div class="stats">
+            <div class="stat"><div class="v" id="biz-total">—</div><div class="l">За цикл</div></div>
+            <div class="stat"><div class="v" id="biz-per">—</div><div class="l">На куст</div></div>
+          </div>
+          <div class="verdict" id="biz-verdict"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- КАРГО -->
+  <section id="v-cargo" class="view">
+    <h2>Карго и цены</h2>
+    <p class="sub">Ориентировочные цены Smuggler (community, Notoriety 1). Уточняйте в игре.</p>
+
+    <div class="card">
+      <h3>Быстрый поиск</h3>
+      <input id="cargo-search" placeholder="Название груза...">
+    </div>
+
+    <div class="card">
+      <h3>Популярные грузы</h3>
+      <div id="cargo-list"></div>
+      <p class="note" style="margin-top:10px">Цены растут с Notoriety. Полный сейф и уникальные ящики — самые жирные.</p>
+    </div>
+
+    <div class="card">
+      <h3>Калькулятор партии</h3>
+      <label>Цена за штуку ($)</label>
+      <input id="cargo-price" type="number" value="40000">
+      <label>Количество</label>
+      <input id="cargo-qty" type="number" min="1" value="3">
+      <button class="btn" id="cargo-calc">Посчитать</button>
+      <div id="cargo-out" class="verdict hidden"></div>
+    </div>
+  </section>
+
+  <!-- ПРОДАЖА -->
+  <section id="v-sell" class="view">
+    <h2>Как продавать</h2>
+    <p class="sub">Fence, Smuggler, Sales Center. Не оставляйте деньги на прилавке.</p>
+    <div class="card">
+      <h3>Fence (доллар-ван)</h3>
+      <ul style="padding-left:18px;font-size:13.5px;line-height:1.7">
+        <li>Маркер <b>$</b> на карте Looty Bay или Sales Center.</li>
+        <li>Обычный лут из сумки, Harvest Bags, порошок.</li>
+        <li><b>Сразу забирайте наличку</b> — её могут украсть.</li>
+        <li>Нужна маска. Точки часто кемпят.</li>
+        <li>Notoriety даёт бонус (до +50%).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Smuggler</h3>
+      <ul style="padding-left:18px;font-size:13.5px;line-height:1.7">
+        <li>Для крупных грузов, сейфов, кристаллов, кустов.</li>
+        <li>Другой маркер (обычно коробка).</li>
+        <li>Удобно без базы или при погоне.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Правила</h3>
+      <ul style="padding-left:18px;font-size:13.5px;line-height:1.7">
+        <li>Ключи и некоторые предметы лучше не продавать сразу.</li>
+        <li>Продавайте партиями.</li>
+        <li>После продажи — в банк / отмывку.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- РЕЙД -->
+  <section id="v-raid" class="view">
+    <h2>Рейд / Ходка</h2>
+    <p class="sub">Учебная модель. Не данные игры.</p>
+    <div class="card">
+      <h3>Расчёт шанса и дохода</h3>
+      <label>Ожидаемая добыча ($)</label>
+      <input id="loot-val" type="number" min="0" value="25000">
+      <div class="row">
+        <div>
+          <label>Охрана</label>
+          <select id="security">
+            <option value="1">1 слабая</option>
+            <option value="2">2 низкая</option>
+            <option value="3" selected>3 средняя</option>
+            <option value="4">4 высокая</option>
+            <option value="5">5 максимум</option>
+          </select>
+        </div>
+        <div>
+          <label>Розыск</label>
+          <select id="heat">
+            <option value="1">1 низкий</option>
+            <option value="2">2 небольшой</option>
+            <option value="3" selected>3 средний</option>
+            <option value="4">4 высокий</option>
+            <option value="5">5 критический</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div><label>Игроков</label><input id="players" type="number" min="1" max="10" value="2"></div>
+        <div><label>Минут</label><input id="time" type="number" min="1" max="60" value="12"></div>
+      </div>
+      <button class="btn" id="calc">Посчитать</button>
+      <div id="raid-out" class="hidden">
+        <div class="stats">
+          <div class="stat"><div class="v" id="r-chance">—</div><div class="l">Шанс</div></div>
+          <div class="stat"><div class="v" id="r-exp">—</div><div class="l">Ожидаемо</div></div>
+          <div class="stat"><div class="v" id="r-per">—</div><div class="l">На игрока</div></div>
+          <div class="stat"><div class="v" id="r-loss">—</div><div class="l">Риск</div></div>
+        </div>
+        <div class="verdict" id="r-verdict"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Делёжка</h3>
+      <div class="row">
+        <div><label>Разведка %</label><input id="sh-scout" type="number" value="20"></div>
+        <div><label>Штурм %</label><input id="sh-assault" type="number" value="45"></div>
+      </div>
+      <div class="row">
+        <div><label>Водитель %</label><input id="sh-driver" type="number" value="20"></div>
+        <div><label>Лидер %</label><input id="sh-boss" type="number" value="15"></div>
+      </div>
+      <div id="split-out" class="verdict"></div>
+    </div>
+    <div class="card">
+      <h3>Журнал рейдов</h3>
+      <input id="log-name" placeholder="Название цели">
+      <button class="btn" id="log-add">Записать</button>
+      <div id="log-list" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ЛУТ -->
+  <section id="v-loot" class="view">
+    <h2>Лут и места</h2>
+    <p class="sub">Оценки риска. Фото хранится только в этой сессии.</p>
+    <div class="card">
+      <input id="loot-search" placeholder="Поиск..." style="margin-bottom:8px">
+      <select id="loot-risk">
+        <option value="all">Любой риск</option>
+        <option value="low">Низкий</option>
+        <option value="mid">Средний</option>
+        <option value="high">Высокий</option>
+      </select>
+    </div>
+    <div id="spots"></div>
+  </section>
+
+  <!-- КЛЮЧИ -->
+  <section id="v-keys" class="view">
+    <h2>Ключи</h2>
+    <p class="sub">Лут из шкафов. Каждый открывает конкретную дверь/сейф.</p>
+    <details open>
+      <summary>🔑 Виды</summary>
+      <ul>
+        <li>Описание ключа показывает, что он открывает.</li>
+        <li>Обычные можно тратить. Редкие лучше копить.</li>
+        <li>Не носите ценный ключ зря.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>🧭 Где искать</summary>
+      <ul>
+        <li>Шкафы и тумбы в домах и магазинах.</li>
+        <li>Подсобки, аптеки, ломбарды.</li>
+        <li>Банк и PD — выше риск и награда.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>🔒 Советы</summary>
+      <ul>
+        <li>Один хороший ключ иногда лучше сумки мусора.</li>
+        <li>Храните редкие в сейфе на базе.</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- УКРЫТИЕ -->
+  <section id="v-hide" class="view">
+    <h2>Укрытие</h2>
+    <p class="sub">Учебная оценка + чек-лист защиты.</p>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Защита</label>
+          <select id="h-def">
+            <option value="1">1 базовая</option>
+            <option value="2">2 улучшенная</option>
+            <option value="3" selected>3 хорошая</option>
+            <option value="4">4 усиленная</option>
+            <option value="5">5 крепость</option>
+          </select>
+        </div>
+        <div>
+          <label>Хранилище</label>
+          <select id="h-store">
+            <option value="1">1 маленькое</option>
+            <option value="2">2 среднее</option>
+            <option value="3" selected>3 большое</option>
+            <option value="4">4 очень большое</option>
+            <option value="5">5 склад</option>
+          </select>
+        </div>
+      </div>
+      <label>Ценность содержимого</label>
+      <select id="h-val">
+        <option value="1">1 почти пусто</option>
+        <option value="2">2 немного</option>
+        <option value="3" selected>3 заметно</option>
+        <option value="4">4 много</option>
+        <option value="5">5 сокровищница</option>
+      </select>
+      <button class="btn" id="h-calc">Оценить</button>
+      <div id="h-out" class="hidden">
+        <div class="stats">
+          <div class="stat"><div class="v good" id="h-def-s">—</div><div class="l">Защита</div></div>
+          <div class="stat"><div class="v bad" id="h-att-s">—</div><div class="l">Привлекательность</div></div>
+        </div>
+        <div class="verdict" id="h-verdict"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Чек-лист защиты базы</h3>
+      <div id="base-check"></div>
+      <div class="bar"><div id="base-bar"></div></div>
+    </div>
+  </section>
+
+  <!-- ЗАМЕТКИ -->
+  <section id="v-notes" class="view">
+    <h2>Заметки</h2>
+    <p class="sub">Личные заметки. Сохраняются через CloudStorage (если доступно).</p>
+    <div class="card">
+      <textarea id="notes-text" placeholder="Коды, договорённости, куда ехать, что купить..."></textarea>
+      <button class="btn" id="notes-save">Сохранить</button>
+      <p class="note" id="notes-status"></p>
+    </div>
+    <div class="card">
+      <h3>Быстрые шаблоны</h3>
+      <button class="btn ghost sm" data-tpl="Код от сейфа: &#10;Пароль от ворот: &#10;">Коды</button>
+      <button class="btn ghost sm" data-tpl="Цель: &#10;Время: &#10;Состав: &#10;Делёжка: ">Рейд</button>
+      <button class="btn ghost sm" data-tpl="Купить: &#10;Продать: &#10;Сделать: ">Список дел</button>
+    </div>
+  </section>
+
+  <!-- ВАЙП -->
+  <section id="v-wipe" class="view">
+    <h2>Вайп</h2>
+    <p class="sub">Цикл обычно ~7 дней. Дату вводите вручную.</p>
+    <div class="card">
+      <h3>Таймер</h3>
+      <input id="wipe-date" type="datetime-local">
+      <button class="btn" id="wipe-start">Запустить</button>
+      <div id="wipe-out" class="timer hidden"></div>
+    </div>
+    <div class="card">
+      <h3>Чек-лист перед сбросом</h3>
+      <div id="checklist"></div>
+      <div class="bar"><div id="check-bar"></div></div>
+    </div>
+  </section>
+
+  <!-- ССЫЛКИ -->
+  <section id="v-links" class="view">
+    <h2>Полезные ссылки</h2>
+    <p class="sub">Официальные и community-ресурсы.</p>
+    <a class="link-btn" href="https://store.steampowered.com/app/4262460/ROB_RUN/" target="_blank" rel="noopener">
+      Steam — ROB RUN
+      <small>Страница игры</small>
+    </a>
+    <a class="link-btn" href="https://robrun.wiki/" target="_blank" rel="noopener">
+      ROB RUN Wiki
+      <small>База знаний</small>
+    </a>
+    <a class="link-btn" href="https://robrungame.app/" target="_blank" rel="noopener">
+      RobRunGame.app
+      <small>Гайды и механики</small>
+    </a>
+    <div class="card" style="margin-top:14px">
+      <h3>Что проверить в игре</h3>
+      <ul style="padding-left:18px;font-size:13.5px;line-height:1.7">
+        <li>Актуальные цены на Trade Laptop</li>
+        <li>Время до вайпа на сервере</li>
+        <li>Онлайн копов перед крупной ходкой</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ГАЙДЫ -->
+  <section id="v-guide" class="view">
+    <h2>Гайды по ролям</h2>
+    <p class="sub">Общие советы. Механики меняются.</p>
+    <details open>
+      <summary>🕵️ Вор</summary>
+      <ul>
+        <li>Смотрите онлайн копов и Notoriety.</li>
+        <li>Не храните всё в одном месте.</li>
+        <li>Берите только то, что успеете вынести.</li>
+        <li>После продажи — сразу в банк.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>🚓 Полицейский</summary>
+      <ul>
+        <li>Патрулируйте банки и точки продажи.</li>
+        <li>Работайте группой.</li>
+        <li>Конфискат тоже доход.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>🤝 Клан</summary>
+      <ul>
+        <li>Роли: разведка, штурм, водитель, база.</li>
+        <li>Делёжку обсуждайте до рейда.</li>
+        <li>Территория и налоги — долгосрочная цель.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>🌱 Новичок</summary>
+      <ul>
+        <li>Контейнеры и мелкие магазины.</li>
+        <li>Поговорите с Ленни.</li>
+        <li>Цель — участок.</li>
+        <li>Потери в начале — нормально.</li>
+      </ul>
+    </details>
+  </section>
+
+</main>
+
+<nav class="nav">
+  <button class="active" data-go="home"><span>🏠</span>Меню</button>
+  <button data-go="biz"><span>🏭</span>Бизнес</button>
+  <button data-go="cargo"><span>📦</span>Карго</button>
+  <button data-go="raid"><span>🎯</span>Рейд</button>
+  <button data-go="notes"><span>📝</span>Заметки</button>
+</nav>
+
+<script>
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) {
+    tg.ready(); tg.expand();
+    try { tg.setHeaderColor('#7f1d1d'); tg.setBackgroundColor('#0c0508'); } catch(e){}
+  }
+  const $ = id => document.getElementById(id);
+  const cloud = tg && tg.CloudStorage ? tg.CloudStorage : null;
+  let memoryStore = {};
+
+  function saveData(key, value) {
+    const str = typeof value === 'string' ? value : JSON.stringify(value);
+    if (cloud) cloud.setItem(key, str, err => { if (err) memoryStore[key] = str; });
+    else memoryStore[key] = str;
+  }
+  function loadData(key, cb) {
+    if (cloud) {
+      cloud.getItem(key, (err, val) => {
+        if (err || !val) return cb(memoryStore[key] || null);
+        cb(val);
+      });
+    } else cb(memoryStore[key] || null);
+  }
+
+  function go(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'v-' + name));
+    document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.go === name));
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+
+  // Daily tip
+  const TIPS = [
+    "После продажи сразу забирайте деньги с прилавка — их могут украсть.",
+    "Куст после сбора отрастает сам. Один хороший куст кормит долго.",
+    "Редкие ключи лучше хранить на базе, а не носить с собой.",
+    "Перед крупной ходкой проверьте онлайн копов.",
+    "Наличку держите в банке / отмытой, а не дома.",
+    "Закрывайте ворота и двери базы каждый раз.",
+    "Продавайте партиями — так меньше потеряете при смерти.",
+    "Notoriety повышает цены у Fence и Smuggler.",
+    "Дым над лабой выдаёт вашу базу.",
+    "Начинайте с контейнеров и мелких магазинов."
+  ];
+  $('tip-text').textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+
+  // Biz tabs
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      ['grow','lab','calc'].forEach(id => {
+        const el = $('tab-' + id);
+        if (el) el.classList.toggle('hidden', id !== t.dataset.tab);
+      });
+    };
+  });
+
+  $('biz-calc').onclick = () => {
+    const bushes = Math.max(1, parseInt($('biz-bushes').value) || 1);
+    const price = parseInt($('biz-rarity').value) || 6000;
+    const bags = Math.max(1, parseFloat($('biz-bags').value) || 3);
+    const total = Math.round(bushes * bags * price);
+    $('biz-total').textContent = total.toLocaleString('ru') + '$';
+    $('biz-per').textContent = Math.round(total / bushes).toLocaleString('ru') + '$';
+    $('biz-verdict').textContent = 'Оценка одного цикла. Реальная цена зависит от Notoriety и баланса.';
+    $('biz-out').classList.remove('hidden');
+  };
+
+  // Cargo
+  const CARGO = [
+    { name: "Contraband Cargo", price: 10000 },
+    { name: "Uncommon Crate", price: 25000 },
+    { name: "Epic Crate", price: 40000 },
+    { name: "Jewelry Box / Suitcase", price: 25000 },
+    { name: "Bank Money Bag", price: 60000 },
+    { name: "Portable Safe", price: 100000 },
+    { name: "Weapon Parts Box", price: 120000 },
+    { name: "Valuable Cargo", price: 150000 },
+    { name: "Expensive Safe", price: 200000 },
+    { name: "Golden Statue", price: 250000 },
+    { name: "Unique Collection Crate", price: 500000 },
+    { name: "Hard Crystals (Legendary)", price: 75000 },
+    { name: "Mature Bush (Epic)", price: 45000 },
+    { name: "Harvest Bag (Epic)", price: 6000 }
+  ];
+  function renderCargo(q = '') {
+    const list = CARGO.filter(c => c.name.toLowerCase().includes(q.toLowerCase()));
+    $('cargo-list').innerHTML = list.map(c =>
+      `<div class="cargo-item"><span>${c.name}</span><b>~$${c.price.toLocaleString('ru')}</b></div>`
+    ).join('') || '<p class="sub">Ничего не найдено</p>';
+  }
+  renderCargo();
+  $('cargo-search').oninput = () => renderCargo($('cargo-search').value);
+  $('cargo-calc').onclick = () => {
+    const p = parseFloat($('cargo-price').value) || 0;
+    const q = Math.max(1, parseInt($('cargo-qty').value) || 1);
+    $('cargo-out').textContent = `Итого примерно: $${(p * q).toLocaleString('ru')}`;
+    $('cargo-out').classList.remove('hidden');
+  };
+
+  // Spots
+  const SPOTS = [
+    { name: "Мусорные контейнеры", risk: "low", zone: "Старт", loot: "Мелкие деньги", keys: false, tip: "Лучший старт.", note: "Проверьте в вашей версии." },
+    { name: "Жилые дома", risk: "low", zone: "Город", loot: "Ключи, электроника", keys: true, tip: "Ключи в шкафах.", note: "Community." },
+    { name: "Магазины / ломбарды", risk: "mid", zone: "Город", loot: "Наличные, ценности", keys: true, tip: "Кассы + подсобки.", note: "Сейфы могут требовать ключ." },
+    { name: "Gear Store / Gun Shop", risk: "mid", zone: "Даунтаун", loot: "Снаряжение, кусты", keys: true, tip: "Часто ищут кусты здесь.", note: "По отчетам игроков." },
+    { name: "Банк / хранилище", risk: "high", zone: "Центр", loot: "Крупные суммы, сейфы", keys: true, tip: "Нужна подготовка.", note: "Изучите гайд." },
+    { name: "PD Heist", risk: "high", zone: "Участок", loot: "Снаряжение, сейфы", keys: true, tip: "Только группой.", note: "Высокий риск." },
+    { name: "Отели / ювелирка / аптека", risk: "mid", zone: "Город", loot: "Ценности, кусты, ключи", keys: true, tip: "Хорошие точки поиска.", note: "Community." }
+  ];
+  const RISK = { low: "Низкий", mid: "Средний", high: "Высокий" };
+
+  function renderSpots() {
+    const q = $('loot-search').value.trim().toLowerCase();
+    const risk = $('loot-risk').value;
+    const list = SPOTS.filter(s =>
+      (risk === 'all' || s.risk === risk) &&
+      (s.name.toLowerCase().includes(q) || s.loot.toLowerCase().includes(q))
+    );
+    $('spots').innerHTML = list.length ? list.map((s,i) => `
+      <article class="spot">
+        <div class="photo" id="ph-${i}"><span>📷 Загрузите скрин</span></div>
+        <div class="body">
+          <h4>${s.name}</h4>
+          <div class="meta">
+            <span class="chip r">${RISK[s.risk]}</span>
+            <span class="chip">${s.zone}</span>
+            ${s.keys ? '<span class="chip">🗝️</span>' : ''}
+          </div>
+          <p style="font-size:13.5px;margin-bottom:4px"><b>Лут:</b> ${s.loot}</p>
+          <p style="font-size:13.5px">${s.tip}</p>
+          <p class="note">${s.note}</p>
+          <label class="upload">📎 Фото<input type="file" accept="image/*" data-i="${i}"></label>
+        </div>
+      </article>`).join('') : `<div class="card"><p class="sub" style="margin:0">Ничего не найдено</p></div>`;
+    document.querySelectorAll('#spots input[type=file]').forEach(inp => {
+      inp.onchange = () => {
+        const f = inp.files[0]; if (!f) return;
+        const box = $('ph-' + inp.dataset.i);
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        box.innerHTML = ''; box.appendChild(img);
+      };
+    });
+  }
+  $('loot-search').oninput = renderSpots;
+  $('loot-risk').onchange = renderSpots;
+  renderSpots();
+
+  // Raid
+  $('calc').onclick = () => {
+    const loot = Math.max(0, parseFloat($('loot-val').value) || 0);
+    const sec = parseInt($('security').value, 10);
+    const heat = parseInt($('heat').value, 10);
+    const players = Math.max(1, parseInt($('players').value, 10) || 1);
+    const time = Math.max(1, parseInt($('time').value, 10) || 1);
+    let chance = 88 - sec * 9 - heat * 6 - Math.max(0, time - 10) * 0.6;
+    chance = Math.round(Math.min(95, Math.max(5, chance)));
+    const expected = Math.round(loot * chance / 100);
+    $('r-chance').textContent = chance + '%';
+    $('r-chance').className = 'v ' + (chance >= 60 ? 'good' : chance >= 35 ? 'warn' : 'bad');
+    $('r-exp').textContent = expected.toLocaleString('ru');
+    $('r-per').textContent = Math.round(expected / players).toLocaleString('ru');
+    $('r-loss').textContent = (100 - chance) + '%';
+    $('r-verdict').textContent = chance >= 60 ? 'Выглядит выгодно. Главное — выйти вовремя.' :
+      chance >= 35 ? 'Средние шансы. Лучше группа или проще цель.' : 'Высокий риск. Переждите или смените цель.';
+    $('raid-out').classList.remove('hidden');
+    renderSplit();
+  };
+  function renderSplit() {
+    const total = parseFloat(($('r-exp').textContent || '0').replace(/\s/g,'')) || 0;
+    const roles = [['sh-scout','Разведка'],['sh-assault','Штурм'],['sh-driver','Водитель'],['sh-boss','Лидер']];
+    const pcts = roles.map(([id]) => parseFloat($(id).value) || 0);
+    const sum = pcts.reduce((a,b) => a+b, 0);
+    $('split-out').innerHTML = roles.map(([,n],i) => `${n}: <b>${Math.round(total*pcts[i]/100).toLocaleString('ru')}$</b>`).join('<br>')
+      + (sum !== 100 ? `<br><span class="bad">Сумма ${sum}% — нужно 100%</span>` : '');
+  }
+  ['sh-scout','sh-assault','sh-driver','sh-boss'].forEach(id => $(id).oninput = renderSplit);
+
+  let raidLog = [];
+  function renderLog() {
+    $('log-list').innerHTML = raidLog.length
+      ? raidLog.map(r => `<div class="list-row"><div><b>${r.name}</b><div class="s">${r.exp}$</div></div><span class="chip r">${r.chance}%</span></div>`).join('')
+      : `<p class="sub" style="margin:0">Записей нет</p>`;
+  }
+  $('log-add').onclick = () => {
+    if ($('raid-out').classList.contains('hidden')) return;
+    raidLog.unshift({ name: $('log-name').value.trim() || 'Без названия', exp: $('r-exp').textContent, chance: parseInt($('r-chance').textContent,10) });
+    if (raidLog.length > 30) raidLog.pop();
+    $('log-name').value = '';
+    renderLog();
+    saveData('raidLog', raidLog);
+  };
+  loadData('raidLog', raw => { try { const d = JSON.parse(raw); if (Array.isArray(d)) { raidLog = d; renderLog(); } } catch(e){} });
+
+  // Hideout
+  $('h-calc').onclick = () => {
+    const d = parseInt($('h-def').value,10), s = parseInt($('h-store').value,10), v = parseInt($('h-val').value,10);
+    const defense = 20 + d*16, attract = 15 + s*10 + v*12;
+    $('h-def-s').textContent = defense;
+    $('h-att-s').textContent = attract;
+    const diff = defense - attract;
+    $('h-verdict').textContent = diff >= 15 ? 'Укрытие выглядит надёжным.' :
+      diff >= -10 ? 'Баланс нормальный. При росте запасов усиливайте защиту.' :
+      'Слишком заманчиво. Добавьте защиту или уменьшите запасы.';
+    $('h-out').classList.remove('hidden');
+  };
+
+  // Base checklist
+  const BASE_CHECKS = ["Двери и ворота закрыты","Предохранители в системах","Ценности в сейфах","Наличка в банке/отмыта","Камеры / сигнализация проверены"];
+  let baseState = BASE_CHECKS.map(() => false);
+  function renderBaseCheck() {
+    $('base-check').innerHTML = BASE_CHECKS.map((t,i) =>
+      `<label class="check ${baseState[i]?'done':''}"><input type="checkbox" data-i="${i}" ${baseState[i]?'checked':''}><span>${t}</span></label>`
+    ).join('');
+    document.querySelectorAll('#base-check input').forEach(b => {
+      b.onchange = () => {
+        baseState[b.dataset.i] = b.checked;
+        b.closest('.check').classList.toggle('done', b.checked);
+        const done = baseState.filter(Boolean).length;
+        $('base-bar').style.width = (done/BASE_CHECKS.length*100)+'%';
+        saveData('baseCheck', baseState);
+      };
+    });
+    $('base-bar').style.width = (baseState.filter(Boolean).length/BASE_CHECKS.length*100)+'%';
+  }
+  loadData('baseCheck', raw => { try { const d=JSON.parse(raw); if(Array.isArray(d)&&d.length===BASE_CHECKS.length) baseState=d; } catch(e){} renderBaseCheck(); });
+
+  // Notes
+  loadData('notes', val => { if (val) $('notes-text').value = val; });
+  $('notes-save').onclick = () => {
+    saveData('notes', $('notes-text').value);
+    $('notes-status').textContent = 'Сохранено ✓';
+    setTimeout(() => $('notes-status').textContent = '', 2000);
+  };
+  document.querySelectorAll('[data-tpl]').forEach(b => {
+    b.onclick = () => {
+      $('notes-text').value = ($('notes-text').value ? $('notes-text').value + '\n\n' : '') + b.dataset.tpl;
+    };
+  });
+
+  // Wipe checklist
+  const CHECKS = ["Продать/потратить лишнее","Проверить защиту укрытий","Забрать доход с бизнесов","Договориться с кланом","Ценное в сейфах/банке","Проверить время вайпа"];
+  let checkState = CHECKS.map(() => false);
+  function renderChecklist() {
+    $('checklist').innerHTML = CHECKS.map((t,i) =>
+      `<label class="check ${checkState[i]?'done':''}"><input type="checkbox" data-i="${i}" ${checkState[i]?'checked':''}><span>${t}</span></label>`
+    ).join('');
+    document.querySelectorAll('#checklist input').forEach(b => {
+      b.onchange = () => {
+        checkState[b.dataset.i] = b.checked;
+        b.closest('.check').classList.toggle('done', b.checked);
+        $('check-bar').style.width = (checkState.filter(Boolean).length/CHECKS.length*100)+'%';
+        saveData('checklist', checkState);
+      };
+    });
+    $('check-bar').style.width = (checkState.filter(Boolean).length/CHECKS.length*100)+'%';
+  }
+  loadData('checklist', raw => { try { const d=JSON.parse(raw); if(Array.isArray(d)&&d.length===CHECKS.length) checkState=d; } catch(e){} renderChecklist(); });
+
+  // Timer
+  let timer = null;
+  function tick(target) {
+    const diff = target - Date.now();
+    if (diff <= 0) { $('wipe-out').textContent = 'Сброс наступил'; clearInterval(timer); return; }
+    const d = Math.floor(diff/86400000), h = Math.floor(diff%86400000/3600000), m = Math.floor(diff%3600000/60000);
+    $('wipe-out').textContent = `${d} д ${h} ч ${m} мин`;
+  }
+  $('wipe-start').onclick = () => {
+    const v = $('wipe-date').value; if (!v) return;
+    const target = new Date(v).getTime();
+    clearInterval(timer); tick(target);
+    $('wipe-out').classList.remove('hidden');
+    timer = setInterval(() => tick(target), 30000);
+    saveData('wipeDate', v);
+  };
+  loadData('wipeDate', v => {
+    if (v) {
+      $('wipe-date').value = v;
+      const target = new Date(v).getTime();
+      if (target > Date.now()) {
+        tick(target); $('wipe-out').classList.remove('hidden');
+        timer = setInterval(() => tick(target), 30000);
+      }
+    }
+  });
+</script>
+</body>
+</html>
